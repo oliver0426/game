@@ -17,6 +17,60 @@ let cells = [];
 let revealedCount = 0;
 let minesPlaced = false;
 
+function createAudio(path) {
+  const audio = new Audio(encodeURI(path));
+  audio.preload = 'auto';
+  return audio;
+}
+
+const bgmAudio = createAudio('./audio/bgm/Main Theme - Microsoft Minesweeper [7I9E6Enw1R0].mp3');
+bgmAudio.loop = true;
+bgmAudio.volume = 0.3;
+const explosionAudio = createAudio('./audio/explosion/Explosion (Rocket shot._wav) - Classic Time Bomb - Roblox [hIN1qtijSCo].mp3');
+const victoryAudio = createAudio('./audio/victory/Windows 3.1 - Tada [QDUv_8Dw-Mw].mp3');
+let bgmStarted = false;
+
+bgmAudio.addEventListener('error', () => {
+  console.error('BGM 讀取錯誤:', bgmAudio.error && bgmAudio.error.message);
+});
+explosionAudio.addEventListener('error', () => {
+  console.error('爆炸音效讀取錯誤:', explosionAudio.error && explosionAudio.error.message);
+});
+victoryAudio.addEventListener('error', () => {
+  console.error('勝利音效讀取錯誤:', victoryAudio.error && victoryAudio.error.message);
+});
+
+function playBgm() {
+  if (!bgmStarted || bgmAudio.paused) {
+    bgmAudio.play().then(() => {
+      bgmStarted = true;
+    }).catch((error) => {
+      console.warn('BGM 無法播放:', error);
+    });
+  }
+}
+
+function pauseBgm() {
+  if (!bgmAudio.paused) {
+    bgmAudio.pause();
+  }
+}
+
+function playEffect(effectAudio) {
+  pauseBgm();
+  effectAudio.currentTime = 0;
+
+  const resumeBgm = () => {
+    effectAudio.removeEventListener('ended', resumeBgm);
+    playBgm();
+  };
+
+  effectAudio.addEventListener('ended', resumeBgm);
+  effectAudio.play().catch(() => {
+    playBgm();
+  });
+}
+
 const sizes = {
   '6x6': 6,
   '9x9': 12,
@@ -189,9 +243,11 @@ function endGame(win) {
   if (win) {
     resultTitle.textContent = '🎉 勝利！';
     resultDetail.textContent = '你已成功掃除所有非地雷格子。';
+    playEffect(victoryAudio);
   } else {
     resultTitle.textContent = '💥 失敗！';
     resultDetail.textContent = '很遺憾，你踩到地雷了。';
+    playEffect(explosionAudio);
   }
 }
 
@@ -231,6 +287,7 @@ document.querySelectorAll('.size-buttons button').forEach(button => {
   button.addEventListener('click', () => {
     const r = Number(button.dataset.rows);
     const c = Number(button.dataset.cols);
+    playBgm();
     createGrid(r, c);
   });
 });
