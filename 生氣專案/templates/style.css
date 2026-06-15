@@ -1,0 +1,403 @@
+/* ==================== 全域樣式 ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    /* 字體設定 */
+    font-family: 'Segoe UI', 'Arial', '微軟正黑體', sans-serif;
+    /* 背景漸層 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 100vh;
+    overflow: hidden;
+    /* 防止用戶選擇文字（提升遊戲體驗） */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ==================== 主遊戲容器（Flexbox 絕對置中） */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;           /* 水平置中 */
+    justify-content: center;       /* 垂直置中 */
+    height: 100vh;
+    width: 100%;
+}
+
+/* ==================== 進度條 ==================== */
+.progress-bar {
+    /* 固定位置在頁面頂部 */
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* 文字樣式 */
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    
+    /* Z-index 確保在最上層 */
+    z-index: 10;
+}
+
+.progress-bar span {
+    color: #FFD700;             /* 黃金色強調 */
+    font-weight: bold;
+}
+
+/* ==================== Canvas 容器（外層包裝器） */
+.canvas-wrapper {
+    /* 相對定位作為動畫參考點 */
+    position: relative;
+    
+    /* 外觀樣式 */
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    
+    /* 進場動畫：從右側滑入 */
+    animation: slideInFromRight 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 
+【進場動畫定義】
+從頁面外右側 (translateX(100vw)) 平滑滑入到正中央 (translateX(0))
+使用 cubic-bezier 製造彈性效果
+*/
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100vw);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== Canvas 元素 ==================== */
+canvas {
+    /* Canvas 必須是 block 元素，避免底部間距 */
+    display: block;
+    /* 滑鼠切換為紅筆游標，方便在考卷上批改 */
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M4 28 L8 24 L24 8 L28 12 L12 28 Z' fill='%23ff0000' stroke='%23000000' stroke-width='2'/><circle cx='22' cy='10' r='3' fill='%23ff0000' stroke='%23000000' stroke-width='2'/></svg>") 10 22, crosshair;
+    /* 防止在 Canvas 上出現文字選擇游標 */
+    user-select: none;
+}
+
+/* ==================== 下一張按鈕 ==================== */
+.next-button {
+    /* 尺寸與間距 */
+    margin-top: 35px;
+    padding: 14px 45px;
+    
+    /* 文字樣式 */
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    
+    /* 按鈕樣式 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    
+    /* 互動效果 */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 按鈕懸停效果 */
+.next-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.35);
+}
+
+/* 按鈕按下效果 */
+.next-button:active {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+/* 按鈕禁用狀態 */
+.next-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==================== 規則說明彈窗 ==================== */
+/* 彈窗遮罩背景 */
+.modal-overlay {
+    /* 全螢幕遮罩 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* 半透明黑色背景 */
+    background: rgba(0, 0, 0, 0.75);
+    
+    /* 使用 Flexbox 置中內容 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* 確保在最上層 */
+    z-index: 1000;
+    
+    /* 過渡動畫 */
+    transition: opacity 0.3s ease;
+}
+
+/* 遮罩隱藏時的透明度 */
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 彈窗主體 */
+.modal {
+    /* 內間距 */
+    padding: 45px;
+    
+    /* 背景與邊框 */
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    
+    /* 最大寬度限制 */
+    max-width: 650px;
+    width: 90%;
+    
+    /* 動畫進場 */
+    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 彈窗進場動畫 */
+@keyframes modalSlideIn {
+    from {
+        transform: scale(0.8) translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 彈窗標題 */
+.modal h2 {
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 28px;
+    text-align: center;
+}
+
+/* 規則文字容器 */
+.modal .rules {
+    /* 文字對齊 */
+    text-align: left;
+    margin: 25px 0;
+    
+    /* 行高與顏色 */
+    line-height: 1.9;
+    color: #555;
+    font-size: 15px;
+}
+
+/* 規則段落樣式 */
+.modal .rules p {
+    margin: 12px 0;
+    margin-left: 15px;
+}
+
+/* 規則標題 */
+.modal .rules strong {
+    color: #667eea;
+}
+
+/* 彈窗按鈕 */
+.modal-button {
+    /* 尺寸 */
+    display: block;
+    width: 100%;
+    max-width: 250px;
+    margin: 30px auto 0;
+    padding: 13px 30px;
+    
+    /* 文字 */
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    
+    /* 按鈕樣式 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    
+    /* 互動 */
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* 彈窗按鈕懸停 */
+.modal-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.6);
+}
+
+/* 彈窗按鈕按下 */
+.modal-button:active {
+    transform: translateY(0);
+}
+
+/* ==================== 右下角操作提示 ==================== */
+.tips {
+    /* 固定在右下角 */
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    
+    /* 文字樣式 */
+    text-align: right;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 13px;
+    line-height: 1.7;
+    
+    /* Z-index 在彈窗之下 */
+    z-index: 5;
+    
+    /* 防止干擾遊戲 */
+    pointer-events: none;
+    
+    /* 文字陰影增強可讀性 */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.tips div {
+    margin: 5px 0;
+}
+
+/* ==================== 遊戲結束彈窗 ==================== */
+/* 遊戲結束時的全螢幕遮罩 */
+.game-over-modal {
+    /* 全螢幕覆蓋 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* 深色半透明背景 */
+    background: rgba(0, 0, 0, 0.85);
+    
+    /* Flexbox 置中 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* 最高層級 */
+    z-index: 2000;
+}
+
+/* 遊戲結束內容 */
+.game-over-content {
+    /* 文字置中 */
+    text-align: center;
+    
+    /* 文字大小與顏色 */
+    font-size: 72px;
+    font-weight: bold;
+    color: #FFD700;
+    
+    /* 文字陰影 */
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+    
+    /* 進場動畫 */
+    animation: celebrationPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* 允許底線重疊 */
+    line-height: 1.4;
+}
+
+/* 遊戲結束按鈕 */
+.game-over-content .modal-button {
+    font-size: 18px;
+    padding: 14px 28px;
+    border-radius: 999px;
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.35);
+}
+
+/* 慶祝彈出動畫 */
+@keyframes celebrationPop {
+    0% {
+        transform: scale(0.3) rotateX(45deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1) rotateX(0deg);
+    }
+    100% {
+        transform: scale(1) rotateX(0deg);
+        opacity: 1;
+    }
+}
+
+/* ==================== 響應式設計 ==================== */
+@media (max-width: 768px) {
+    .progress-bar {
+        font-size: 16px;
+        top: 15px;
+    }
+
+    .canvas-wrapper {
+        max-width: 90vw;
+        max-height: 60vh;
+    }
+
+    .next-button {
+        margin-top: 25px;
+        padding: 12px 30px;
+        font-size: 16px;
+    }
+
+    .modal {
+        padding: 30px;
+        max-width: 90vw;
+    }
+
+    .modal h2 {
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+
+    .modal .rules {
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .game-over-content {
+        font-size: 48px;
+    }
+
+    .tips {
+        font-size: 11px;
+        bottom: 15px;
+        right: 15px;
+    }
+}

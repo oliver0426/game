@@ -2,7 +2,7 @@
 # 此檔案為考卷批改遊戲的 Flask 後端
 # 功能：管理考卷圖片、記錄遊戲進度、提供 API 路由給前端
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 
 # ==================== Flask 應用初始化 ====================
 app = Flask(__name__)
@@ -87,6 +87,15 @@ def reset_game():
     global current_paper_index
     current_paper_index = -1
     return jsonify({'message': '遊戲已重置'})
+
+
+@app.route('/resources/<path:filename>')
+def resources(filename):
+    """
+    【資源檔案路由】
+    功能：提供相對路徑資源檔案，如音樂與音效
+    """
+    return send_from_directory('resources', filename)
 
 
 # ==================== 伺服器啟動 ====================
