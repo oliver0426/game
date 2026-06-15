@@ -19,12 +19,12 @@ const progressBar = document.getElementById('progressBar');
 const restartButton = document.getElementById('restartButton');
 
 // ==================== 音樂與音效設定 ====================
-const bgmAudio = new Audio('resources/music/bgm.mp3');
+const bgmAudio = new Audio('/music/BGM/bgm.mp3');
 bgmAudio.loop = true;
 bgmAudio.volume = 0.3;
 bgmAudio.preload = 'auto';
 
-const writingAudio = new Audio('resources/sfx/writing.wav');
+const writingAudio = new Audio('/music/writing/writing.wav');
 writingAudio.loop = true;
 writingAudio.volume = 0.7;
 writingAudio.preload = 'auto';

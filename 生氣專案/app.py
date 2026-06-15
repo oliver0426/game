@@ -89,13 +89,13 @@ def reset_game():
     return jsonify({'message': '遊戲已重置'})
 
 
-@app.route('/resources/<path:filename>')
+@app.route('/music/<path:filename>')
 def resources(filename):
     """
     【資源檔案路由】
     功能：提供相對路徑資源檔案，如音樂與音效
     """
-    return send_from_directory('resources', filename)
+    return send_from_directory('music', filename)
 
 
 # ==================== 伺服器啟動 ====================
